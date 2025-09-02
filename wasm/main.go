@@ -132,6 +132,10 @@ func validateJS(this js.Value, args []js.Value) interface{} {
 func performObfuscation(code string, config ObfuscatorConfig) string {
 	result := code
 	
+	// 保护正则表达式字面量
+	var regexMap map[string]string
+	result, regexMap = protectRegexLiterals(result)
+	
 	// 移除注释（如果不保留）
 	if !config.PreserveComments {
 		result = removeComments(result)
@@ -159,6 +163,9 @@ func performObfuscation(code string, config ObfuscatorConfig) string {
 	if config.CompactCode {
 		result = compactCode(result)
 	}
+	
+	// 恢复正则表达式字面量
+	result = restoreRegexLiterals(result, regexMap)
 	
 	return result
 }
@@ -882,4 +889,109 @@ func checkBasicSyntax(code string) bool {
 	}
 	
 	return true
+}
+
+// 保护正则表达式和特殊语法
+func protectSpecialSyntax(code string) (string, map[string]string) {
+	protectedMap := make(map[string]string)
+	counter := 0
+	
+	// 保护正则表达式字面量 - 使用更精确的模式
+	regexPattern := regexp.MustCompile(`(?:^|[=,({\[\s;:!&|?+\-*/])\s*/(?:[^/\\\r\n]|\\.)*/[gimsuxy]*`)
+	code = regexPattern.ReplaceAllStringFunc(code, func(match string) string {
+		// 找到 / 的位置
+		slashIndex := strings.LastIndex(match, "/")
+		if slashIndex == -1 {
+			return match
+		}
+		
+		// 分离前缀和正则表达式部分
+		prefix := match[:slashIndex]
+		regexPart := match[slashIndex:]
+		
+		placeholder := "__PROTECTED_" + intToString(counter) + "__"
+		protectedMap[placeholder] = regexPart
+		counter++
+		return prefix + placeholder
+	})
+	
+	// 保护模板字符串
+	templatePattern := regexp.MustCompile("`(?:[^`\\\\]|\\\\.)*`")
+	code = templatePattern.ReplaceAllStringFunc(code, func(match string) string {
+		placeholder := "__PROTECTED_" + intToString(counter) + "__"
+		protectedMap[placeholder] = match
+		counter++
+		return placeholder
+	})
+	
+	return code, protectedMap
+}
+
+// 恢复被保护的语法
+func restoreSpecialSyntax(code string, protectedMap map[string]string) string {
+	for placeholder, original := range protectedMap {
+		code = strings.ReplaceAll(code, placeholder, original)
+	}
+	return code
+}
+
+// 保护正则表达式字面量
+func protectRegexLiterals(code string) (string, map[string]string) {
+	regexMap := make(map[string]string)
+	counter := 0
+	
+	// 先保护字符串字面量，避免误匹配
+	stringPattern := regexp.MustCompile(`"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'`)
+	stringMap := make(map[string]string)
+	stringCounter := 0
+	
+	result := stringPattern.ReplaceAllStringFunc(code, func(match string) string {
+		placeholder := "__STRING_TEMP_" + intToString(stringCounter) + "__"
+		stringMap[placeholder] = match
+		stringCounter++
+		return placeholder
+	})
+	
+	// 保护模板字符串
+	templatePattern := regexp.MustCompile("`(?:[^`\\]|\\.)*`")
+	result = templatePattern.ReplaceAllStringFunc(result, func(match string) string {
+		placeholder := "__REGEX_PLACEHOLDER_" + intToString(counter) + "__"
+		regexMap[placeholder] = match
+		counter++
+		return placeholder
+	})
+	
+	// 匹配正则表达式字面量，使用更精确的上下文
+	regexPattern := regexp.MustCompile(`(?:^|[=,({\[\s;:!&|?+\-*/])\s*/(?:[^/\\\r\n]|\\.)*/[gimsuxy]*`)
+	
+	result = regexPattern.ReplaceAllStringFunc(result, func(match string) string {
+		// 找到正则表达式的开始位置
+		slashIndex := strings.LastIndex(match, "/")
+		if slashIndex == -1 {
+			return match
+		}
+		
+		prefix := match[:slashIndex]
+		regexPart := match[slashIndex:]
+		
+		placeholder := "__REGEX_PLACEHOLDER_" + intToString(counter) + "__"
+		regexMap[placeholder] = regexPart
+		counter++
+		return prefix + placeholder
+	})
+	
+	// 恢复字符串字面量
+	for placeholder, original := range stringMap {
+		result = strings.ReplaceAll(result, placeholder, original)
+	}
+	
+	return result, regexMap
+}
+
+// 恢复正则表达式字面量
+func restoreRegexLiterals(code string, regexMap map[string]string) string {
+	for placeholder, original := range regexMap {
+		code = strings.ReplaceAll(code, placeholder, original)
+	}
+	return code
 }
