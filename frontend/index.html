@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 代码混淆工具</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="social-links-top">
+                <a href="https://www.youtube.com/@zaunist" target="_blank" title="YouTube 频道">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="https://github.com/zaunist/js-obfuscator" target="_blank" title="项目仓库">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://ajie.lu" target="_blank" title="个人博客">
+                    <i class="fas fa-blog"></i>
+                </a>
+            </div>
+            <h1>🔒 JavaScript 代码混淆工具</h1>
+            <p class="subtitle">基于 WebAssembly + Go 实现的高性能代码混淆</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 配置面板 -->
+            <div class="config-panel">
+                <h3>混淆配置</h3>
+                <div class="config-grid">
+                    <label class="config-item">
+                        <input type="checkbox" id="identifierObfuscation" checked>
+                        <span class="checkmark"></span>
+                        标识符混淆
+                    </label>
+                    <label class="config-item">
+                        <input type="checkbox" id="stringEncryption" checked>
+                        <span class="checkmark"></span>
+                        字符串加密
+                    </label>
+                    <label class="config-item">
+                        <input type="checkbox" id="controlFlowFlattening">
+                        <span class="checkmark"></span>
+                        控制流混淆
+                    </label>
+                    <!-- 死代码注入和表达式分解功能已移除 -->
+                    <label class="config-item">
+                        <input type="checkbox" id="compactCode" checked>
+                        <span class="checkmark"></span>
+                        代码压缩
+                    </label>
+                </div>
+            </div>
+
+            <!-- 代码编辑区域 -->
+            <div class="editor-container">
+                <div class="editor-panel">
+                    <div class="panel-header">
+                        <h3>原始代码</h3>
+                        <div class="panel-actions">
+                            <button id="loadExample" class="btn btn-secondary">加载示例</button>
+                            <button id="clearInput" class="btn btn-secondary">清空</button>
+                        </div>
+                    </div>
+                    <div class="editor-wrapper">
+                        <textarea id="inputCode" placeholder="请输入或粘贴您的 JavaScript 代码..."></textarea>
+                    </div>
+                    <div class="editor-footer">
+                        <span id="inputStats" class="stats">字符数: 0 | 行数: 0</span>
+                    </div>
+                </div>
+
+                <div class="editor-panel">
+                    <div class="panel-header">
+                        <h3>混淆结果</h3>
+                        <div class="panel-actions">
+                            <button id="copyResult" class="btn btn-secondary">复制</button>
+                            <button id="downloadResult" class="btn btn-secondary">下载</button>
+                        </div>
+                    </div>
+                    <div class="editor-wrapper">
+                        <textarea id="outputCode" readonly placeholder="混淆后的代码将显示在这里..."></textarea>
+                    </div>
+                    <div class="editor-footer">
+                        <span id="outputStats" class="stats">字符数: 0 | 压缩率: 0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-panel">
+                <button id="obfuscateBtn" class="btn btn-primary">
+                    <span class="btn-text">开始混淆</span>
+                    <span class="btn-loading" style="display: none;">处理中...</span>
+                </button>
+            </div>
+
+            <!-- 状态信息 -->
+            <div id="statusPanel" class="status-panel" style="display: none;">
+                <div class="status-content">
+                    <span class="status-icon"></span>
+                    <span class="status-message"></span>
+                </div>
+            </div>
+
+
+        </main>
+
+        <footer class="footer">
+            <p>
+                Powered by <strong>WebAssembly + Go</strong> | 
+                <span id="wasmStatus">WASM 状态: 加载中...</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- WASM 运行时 -->
+    <script src="wasm_exec.js"></script>
+    <script src="bundle.js"></script>
+</body>
+</html>

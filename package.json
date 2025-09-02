@@ -1,0 +1,27 @@
+{
+  "name": "js-obfuscator",
+  "version": "1.0.0",
+  "description": "JavaScript代码混淆工具 - 基于WebAssembly + Go实现",
+  "scripts": {
+    "build:wasm": "mkdir -p dist/wasm && cd wasm && tinygo build -o ../dist/wasm/obfuscator.wasm -target wasm .",
+    "build:frontend": "webpack --mode production --output-path dist",
+    "build": "pnpm run build:wasm && pnpm run build:frontend",
+    "dev": "wrangler dev",
+    "deploy": "pnpm run deploy",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "html-webpack-plugin": "^5.5.3",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "copy-webpack-plugin": "^11.0.0",
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "codemirror": "^6.0.1",
+    "@codemirror/lang-javascript": "^6.2.1",
+    "@codemirror/theme-one-dark": "^6.1.2"
+  }
+}
